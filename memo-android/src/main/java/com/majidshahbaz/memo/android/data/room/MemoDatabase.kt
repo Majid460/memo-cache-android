@@ -5,7 +5,7 @@ import androidx.room.Room
 import androidx.room.RoomDatabase
 import android.content.Context
 
-@Database(entities = [CacheEntryEntity::class], version = 1)
+@Database(entities = [CacheEntryEntity::class], version = 1, exportSchema = false)
 abstract class MemoDatabase : RoomDatabase() {
     abstract fun cacheDao(): CacheDao
 
