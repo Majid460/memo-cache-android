@@ -1,4 +1,4 @@
-package com.majidshahbaz.memo.core
+package com.majidshahbaz.memo.core.cache
 
 
 import java.security.MessageDigest

@@ -1,5 +1,9 @@
 package com.majidshahbaz.memo.core
 
+import com.majidshahbaz.memo.core.cache.CacheEntry
+import com.majidshahbaz.memo.core.cache.CacheKeyGenerator
+import com.majidshahbaz.memo.core.cache.CacheStore
+
 
 enum class ResponseSource { CACHE, NETWORK, OFFLINE_FALLBACK }
 

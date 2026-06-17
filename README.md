@@ -96,7 +96,7 @@ memo/
 
 - [x] Core hashing + TTL logic (`memo-core`)
 - [x] Unit tests for cache hit / miss / expiry behavior
-- [ ] Room-backed persistent cache (`memo-android`)
+- [x] Room-backed persistent cache (`memo-android`)
 - [ ] On-device offline fallback via MediaPipe
 - [ ] Cost estimator + stats dashboard
 - [ ] Demo app

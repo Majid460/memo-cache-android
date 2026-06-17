@@ -1,5 +1,8 @@
 package com.majidshahbaz.memo.core
 
+import com.majidshahbaz.memo.core.cache.CacheEntry
+import com.majidshahbaz.memo.core.cache.CacheKeyGenerator
+import com.majidshahbaz.memo.core.cache.CacheStore
 import kotlinx.coroutines.test.runTest
 import org.junit.Test
 import org.junit.Assert.*
