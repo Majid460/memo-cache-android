@@ -28,6 +28,7 @@ dependencies {
     implementation(libs.room.runtime)
     implementation(libs.room.ktx)
     ksp(libs.room.compiler)
+    implementation(libs.litertlm.android)
 
     implementation(libs.androidx.appcompat)
     implementation(libs.androidx.core.ktx)
