@@ -15,7 +15,8 @@ import kotlinx.serialization.json.Json
 @Serializable
 data class ResolveModelRequest(
     val totalRamMb: Long,
-    val availableStorageMb: Long
+    val availableStorageMb: Long,
+    val requestedTier: String? = null
 )
 
 @Serializable
@@ -38,12 +39,13 @@ class ModelResolverApi(
 
     suspend fun resolveModel(
         totalRamMb: Long,
-        availableStorageMb: Long
+        availableStorageMb: Long,
+        requestedTier: String? = null
     ): ResolvedModel? {
         return try {
             val response = client.post(resolverEndpoint) {
                 contentType(ContentType.Application.Json)
-                setBody(ResolveModelRequest(totalRamMb, availableStorageMb))
+                setBody(ResolveModelRequest(totalRamMb, availableStorageMb, requestedTier))
             }
             Json { ignoreUnknownKeys = true }
                 .decodeFromString<ResolvedModel>(response.bodyAsText())

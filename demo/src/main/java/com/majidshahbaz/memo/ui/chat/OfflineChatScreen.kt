@@ -18,27 +18,27 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import com.majidshahbaz.memo.android.state.MemoNetworkState
-import com.majidshahbaz.memo.ui.chat.components.ChatBottomInputConsole
-import com.majidshahbaz.memo.ui.chat.components.ChatTimeline
-import com.majidshahbaz.memo.ui.chat.components.ChatTopBar
-import com.majidshahbaz.memo.ui.chat.components.DownloadOnboardingBanner
-import com.majidshahbaz.memo.ui.chat.components.DownloadProgressTile
-import com.majidshahbaz.memo.ui.chat.components.NoOfflineSupportDialog
+import com.majidshahbaz.memo.ui.chat.components.*
 import kotlinx.coroutines.delay
 import kotlin.time.Duration.Companion.milliseconds
 
 @Composable
 fun OfflineChatScreen(viewModel: ChatViewModel) {
     val chatMessages by viewModel.messages.collectAsState()
-    val networkState by viewModel.networkState.collectAsState()
+    val networkState by viewModel.effectiveNetworkState.collectAsState()
     var inputText by remember { mutableStateOf("") }
     val listState = rememberLazyListState()
     val isGenerating by viewModel.isGenerating.collectAsState()
     val showOnboarding by viewModel.showDownloadOnboarding.collectAsState()
+    val intendedTier by viewModel.intendedTier.collectAsState()
+    val storageUsage by viewModel.storageUsage.collectAsState()
+    val hardwareProfile by viewModel.hardwareProfile.collectAsState()
+    val userAiMode by viewModel.userAiMode.collectAsState()
 
     var isAutoScrollEnabled by remember { mutableStateOf(true) }
     var userIsManuallyScrolling by remember { mutableStateOf(false) }
     var showNoOfflineDialog by remember { mutableStateOf(false) }
+    var showFirstTimeDialog by remember { mutableStateOf(!viewModel.isAnyModelDownloaded) }
 
     // Single source of truth for auto-scroll during streaming —
     // throttled, with a re-check after the delay to respect manual scroll
@@ -57,6 +57,15 @@ fun OfflineChatScreen(viewModel: ChatViewModel) {
         color = MaterialTheme.colorScheme.background
     ) {
         Box(modifier = Modifier.fillMaxSize()) {
+            if (showFirstTimeDialog && !viewModel.isAnyModelDownloaded) {
+                FirstTimeDownloadDialog(
+                    onTierSelected = { tier ->
+                        showFirstTimeDialog = false
+                        viewModel.selectTier(tier)
+                    },
+                    onDismiss = { showFirstTimeDialog = false }
+                )
+            }
             if (showNoOfflineDialog) {
                 NoOfflineSupportDialog(
                     onDownloadClick = {
@@ -75,12 +84,21 @@ fun OfflineChatScreen(viewModel: ChatViewModel) {
             ) {
                 ChatTopBar(
                     networkState = networkState,
-                    isModelDownloaded = viewModel.isModelDownloaded,
-                    title = "Memo",
-                    onDownloadModelClick = { viewModel.downloadModel() }
+                    isModelDownloaded = viewModel.isAnyModelDownloaded,
+                    selectedTier = intendedTier,
+                    storageUsage = storageUsage,
+                    hardwareProfile = hardwareProfile,
+                    userAiMode = userAiMode,
+                    onAiModeToggle = { viewModel.toggleAiMode() },
+                    onTierSelected = { viewModel.selectTier(it) },
+                    onDownloadModelClick = { viewModel.downloadModel() },
+                    onCancelDownloadClick = { viewModel.cancelDownload() },
+                    onDeleteModelClick = { viewModel.deleteModel(it) },
+                    isTierDownloaded = { viewModel.isModelDownloaded(it) },
+                    title = "Memo"
                 )
                 DownloadOnboardingBanner(
-                    isVisible = showOnboarding && !viewModel.isModelDownloaded,
+                    isVisible = showOnboarding && !viewModel.isAnyModelDownloaded,
                     onDismiss = { viewModel.dismissOnboarding() }
                 )
                 ChatTimeline(

@@ -5,6 +5,9 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.majidshahbaz.memo.BuildConfig
 import com.majidshahbaz.memo.android.Memo
+import com.majidshahbaz.memo.android.hardware.HardwareProfile
+import com.majidshahbaz.memo.android.hardware.HardwareProfiler
+import com.majidshahbaz.memo.android.model.ModelTier
 import com.majidshahbaz.memo.android.state.MemoNetworkState
 import com.majidshahbaz.memo.data.models.ChatMessage
 import com.majidshahbaz.memo.data.models.MessageSource
@@ -12,6 +15,7 @@ import com.majidshahbaz.memo.data.network.GroqApiClient
 import com.majidshahbaz.memo.data.preferences.UserPreferences
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -20,6 +24,16 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.flow.combine
+import java.io.File
+
+enum class AiMode { ONLINE, OFFLINE }
+
+data class StorageUsage(
+    val modelsSizeMb: Long,
+    val cacheSizeMb: Long,
+    val totalSizeMb: Long
+)
 
 class ChatViewModel(application: Application) : AndroidViewModel(application) {
 
@@ -53,6 +67,145 @@ class ChatViewModel(application: Application) : AndroidViewModel(application) {
         .map { shown -> !shown }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), false)
 
+    private val hardwareProfiler = HardwareProfiler(application)
+
+    private val _activeTier = MutableStateFlow<ModelTier>(ModelTier.LITE)
+    val activeTier = _activeTier.asStateFlow()
+
+    private val _intendedTier = MutableStateFlow<ModelTier?>(null)
+    val intendedTier = _intendedTier.asStateFlow()
+
+    private val _hardwareProfile = MutableStateFlow<HardwareProfile?>(null)
+    val hardwareProfile = _hardwareProfile.asStateFlow()
+
+    private val _storageUsage = MutableStateFlow(StorageUsage(0, 0, 0))
+    val storageUsage = _storageUsage.asStateFlow()
+
+    private val _userAiMode = MutableStateFlow(AiMode.ONLINE)
+    val userAiMode = _userAiMode.asStateFlow()
+
+    val effectiveNetworkState: StateFlow<MemoNetworkState> = combine(
+        memo.networkState,
+        _userAiMode,
+        _intendedTier
+    ) { baseState, userMode, tier ->
+        calculateEffectiveState(baseState, userMode, tier)
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), MemoNetworkState.Online)
+
+    private fun calculateEffectiveState(
+        baseState: MemoNetworkState,
+        userMode: AiMode,
+        tier: ModelTier?
+    ): MemoNetworkState {
+        // ALWAYS prioritize download progress UI regardless of mode
+        if (baseState is MemoNetworkState.DownloadingModel || baseState is MemoNetworkState.DownloadProgress) {
+            return baseState
+        }
+
+        val targetTier = tier ?: ModelTier.LITE
+        return when (userMode) {
+            AiMode.ONLINE -> {
+                if (baseState is MemoNetworkState.Online) {
+                    MemoNetworkState.Online
+                } else if (memo.isModelDownloaded(targetTier)) {
+                    // We are offline, but user wants Online mode. 
+                    // Show "Auto" to indicate we've switched to local model automatically.
+                    MemoNetworkState.OfflineAuto
+                } else {
+                    baseState
+                }
+            }
+            AiMode.OFFLINE -> {
+                if (memo.isModelDownloaded(targetTier)) {
+                    MemoNetworkState.OfflineReady
+                } else {
+                    // User wants offline, but model is missing.
+                    MemoNetworkState.OfflineNoModel
+                }
+            }
+        }
+    }
+
+    init {
+        viewModelScope.launch {
+            userPreferences.aiMode.collect { modeName ->
+                _userAiMode.value = try { AiMode.valueOf(modeName) } catch (e: Exception) { AiMode.ONLINE }
+            }
+        }
+        viewModelScope.launch {
+            userPreferences.selectedModelTier.collect { tierName ->
+                val tier = tierName?.let {
+                    try { ModelTier.valueOf(it) } catch (e: Exception) { null }
+                }
+                
+                _intendedTier.value = tier
+                if (tier != null && memo.isModelDownloaded(tier)) {
+                    _activeTier.value = tier
+                }
+            }
+        }
+
+        viewModelScope.launch {
+            memo.networkState.collect { state ->
+                if (state is MemoNetworkState.OfflineReady) {
+                    _intendedTier.value?.let { intended ->
+                        if (memo.isModelDownloaded(intended)) {
+                            _activeTier.value = intended
+                        }
+                    }
+                }
+            }
+        }
+
+        // Poll for CPU and Storage info
+        viewModelScope.launch {
+            while (true) {
+                _hardwareProfile.value = hardwareProfiler.profile()
+                updateStorageUsage()
+                delay(3000)
+            }
+        }
+    }
+
+    private fun updateStorageUsage() {
+        val context = getApplication<Application>().applicationContext
+        
+        var modelsSize = 0L
+        ModelTier.entries.forEach { tier ->
+            val file = File(context.filesDir, "llm/${tier.fileName}")
+            if (file.exists()) {
+                modelsSize += file.length()
+            }
+        }
+        
+        val dbFile = context.getDatabasePath("memo_cache_db")
+        var cacheSize = if (dbFile.exists()) dbFile.length() else 0L
+        val walFile = File(dbFile.path + "-wal")
+        if (walFile.exists()) cacheSize += walFile.length()
+        val shmFile = File(dbFile.path + "-shm")
+        if (shmFile.exists()) cacheSize += shmFile.length()
+
+        val modelsMb = modelsSize / (1024 * 1024)
+        val cacheMb = cacheSize / (1024 * 1024)
+        _storageUsage.value = StorageUsage(modelsMb, cacheMb, modelsMb + cacheMb)
+    }
+
+    fun selectTier(tier: ModelTier) {
+        viewModelScope.launch {
+            userPreferences.setSelectedModelTier(tier.name)
+            if (!memo.isModelDownloaded(tier)) {
+                memo.downloadModel(tier)
+            }
+        }
+    }
+
+    fun toggleAiMode() {
+        viewModelScope.launch {
+            val newMode = if (_userAiMode.value == AiMode.ONLINE) AiMode.OFFLINE else AiMode.ONLINE
+            userPreferences.setAiMode(newMode.name)
+        }
+    }
+
     private val _messages = MutableStateFlow<List<ChatMessage>>(emptyList())
     val messages = _messages.asStateFlow()
 
@@ -60,9 +213,11 @@ class ChatViewModel(application: Application) : AndroidViewModel(application) {
 
     private val _isGenerating = MutableStateFlow(false)
     val isGenerating = _isGenerating.asStateFlow()
-    val isModelDownloaded: Boolean
-        get() = memo.isModelDownloaded
+    val isAnyModelDownloaded: Boolean
+        get() = memo.isAnyModelDownloaded()
     private var generationJob: Job? = null
+
+    fun isModelDownloaded(tier: ModelTier): Boolean = memo.isModelDownloaded(tier)
 
     fun askOfflineModel(prompt: String) {
         val trimmedPrompt = prompt.trim()
@@ -71,18 +226,23 @@ class ChatViewModel(application: Application) : AndroidViewModel(application) {
         _isGenerating.value = true
 
         val userMsg = ChatMessage(text = trimmedPrompt, isUser = true)
-        val isOnline = networkState.value is MemoNetworkState.Online
-        val source = if (isOnline) MessageSource.CLOUD else MessageSource.ON_DEVICE
+        val currentState = effectiveNetworkState.value
+        val isUsingCloud = currentState is MemoNetworkState.Online
+        
+        val source = if (isUsingCloud) MessageSource.CLOUD else MessageSource.ON_DEVICE
 
         val aiPlaceholderMsg = ChatMessage(text = "", isUser = false, isComplete = false, source = source)
         _messages.value = _messages.value + userMsg + aiPlaceholderMsg
+
+        val currentTier = _activeTier.value
 
         generationJob = viewModelScope.launch {
             try {
                 memo.resolve(
                     prompt = trimmedPrompt,
                     model = "llama-3.3-70b-versatile",
-                    cloudApiCall = { p -> groqClient.chat(p) }
+                    tier = currentTier,
+                    cloudApiCall = if (isUsingCloud) { p -> groqClient.chat(p) } else null
                 ).collect { token ->
                     withContext(Dispatchers.Main) {
                         val currentList = _messages.value.toMutableList()
@@ -146,11 +306,28 @@ class ChatViewModel(application: Application) : AndroidViewModel(application) {
      * Progress and completion are observed via [networkState] —
      * no manual Flow collection needed by the caller.
      */
-    fun downloadModel() {
-        if (memo.isModelDownloaded) {
+    fun downloadModel(tier: ModelTier = ModelTier.LITE) {
+        if (memo.isModelDownloaded(tier)) {
             return
         }
-        memo.downloadModel()
+        memo.downloadModel(tier)
+    }
+
+    fun cancelDownload() {
+        memo.cancelDownload()
+    }
+
+    fun deleteModel(tier: ModelTier) {
+        memo.deleteModel(tier)
+        if (_activeTier.value == tier) {
+            // Find another downloaded model to switch to, or set to null
+            val nextTier = ModelTier.entries.find { memo.isModelDownloaded(it) }
+            _activeTier.value = nextTier ?: ModelTier.LITE // Default to LITE but it won't be "ready"
+            viewModelScope.launch {
+                userPreferences.setSelectedModelTier(nextTier?.name ?: "")
+            }
+        }
+        updateStorageUsage()
     }
 
     override fun onCleared() {

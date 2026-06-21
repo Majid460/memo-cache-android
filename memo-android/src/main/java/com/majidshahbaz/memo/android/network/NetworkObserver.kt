@@ -44,6 +44,12 @@ class NetworkObserver(private val context: Context) {
         }
     }.distinctUntilChanged()
 
+    fun isNetworkAvailable(): Boolean {
+        val connectivityManager =
+            context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
+        return getCurrentStatus(connectivityManager) == NetworkStatus.Available
+    }
+
     private fun getCurrentStatus(
         connectivityManager: ConnectivityManager
     ): NetworkStatus {

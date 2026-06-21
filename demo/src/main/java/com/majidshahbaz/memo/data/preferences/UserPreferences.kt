@@ -18,6 +18,8 @@ class UserPreferences(private val context: Context) {
 
     private object PreferencesKeys {
         val DOWNLOAD_ONBOARDING_SHOWN = booleanPreferencesKey("download_onboarding_shown")
+        val SELECTED_MODEL_TIER = androidx.datastore.preferences.core.stringPreferencesKey("selected_model_tier")
+        val AI_MODE = androidx.datastore.preferences.core.stringPreferencesKey("ai_mode")
     }
 
     val downloadOnboardingShown: Flow<Boolean> = context.dataStore.data
@@ -32,9 +34,45 @@ class UserPreferences(private val context: Context) {
             preferences[PreferencesKeys.DOWNLOAD_ONBOARDING_SHOWN] ?: false
         }
 
+    val selectedModelTier: Flow<String?> = context.dataStore.data
+        .catch { exception ->
+            if (exception is IOException) {
+                emit(emptyPreferences())
+            } else {
+                throw exception
+            }
+        }
+        .map { preferences ->
+            preferences[PreferencesKeys.SELECTED_MODEL_TIER]
+        }
+
+    val aiMode: Flow<String> = context.dataStore.data
+        .catch { exception ->
+            if (exception is IOException) {
+                emit(emptyPreferences())
+            } else {
+                throw exception
+            }
+        }
+        .map { preferences ->
+            preferences[PreferencesKeys.AI_MODE] ?: "ONLINE"
+        }
+
     suspend fun setDownloadOnboardingShown(shown: Boolean) {
         context.dataStore.edit { preferences ->
             preferences[PreferencesKeys.DOWNLOAD_ONBOARDING_SHOWN] = shown
+        }
+    }
+
+    suspend fun setSelectedModelTier(tier: String) {
+        context.dataStore.edit { preferences ->
+            preferences[PreferencesKeys.SELECTED_MODEL_TIER] = tier
+        }
+    }
+
+    suspend fun setAiMode(mode: String) {
+        context.dataStore.edit { preferences ->
+            preferences[PreferencesKeys.AI_MODE] = mode
         }
     }
 }

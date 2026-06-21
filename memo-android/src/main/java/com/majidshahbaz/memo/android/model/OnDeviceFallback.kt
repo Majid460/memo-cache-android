@@ -25,10 +25,7 @@ class OnDeviceFallback(
     private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO
 ) : AutoCloseable {
 
-    private val modelPath = File(
-        context.filesDir,
-        "llm/Gemma3-1B-IT_multi-prefill-seq_q4_block128_ekv1280.task"
-    ).absolutePath
+    private var modelPath: String? = null
 
     // Engine/Conversation instances protected behind a Mutex to prevent multi-thread racing
     private val initializationMutex = Mutex()
@@ -42,26 +39,31 @@ class OnDeviceFallback(
      * Asynchronously initializes the LiteRT-LM engine and creates the session conversation.
      * Safe to call multiple times concurrently; initialization will only execute once.
      */
-    suspend fun initialize(): Unit = withContext(ioDispatcher) {
-        if (isInitialized.get() || isClosed.get()) return@withContext
+    suspend fun initialize(file: java.io.File): Unit = withContext(ioDispatcher) {
+        if (isClosed.get()) return@withContext
+
+        val newPath = file.absolutePath
+        if (isInitialized.get() && modelPath == newPath) return@withContext
 
         initializationMutex.withLock {
-            // Double-checked locking pattern inside Mutex
-            if (isInitialized.get() || isClosed.get()) return@withLock
+            // If already initialized with a DIFFERENT model, close the old one first
+            if (isInitialized.get() && modelPath != newPath) {
+                closeInternal()
+                isClosed.set(false)
+            }
 
-            val config = EngineConfig(modelPath = modelPath)
+            modelPath = newPath
+            val config = EngineConfig(modelPath = newPath)
             val nativeEngine = Engine(config)
 
             try {
-                // Initialize is a heavy JNI operation; executed cleanly on the I/O thread pool
                 nativeEngine.initialize()
                 engine = nativeEngine
                 conversation = nativeEngine.createConversation()
                 isInitialized.set(true)
             } catch (e: Exception) {
-                // Prevent resource leaks if conversation setup fails after engine initialization
                 nativeEngine.close()
-                throw IllegalStateException("Failed to initialize LiteRT-LM engine fallback", e)
+                throw IllegalStateException("Failed to initialize LiteRT-LM engine fallback with $newPath", e)
             }
         }
     }
@@ -70,14 +72,13 @@ class OnDeviceFallback(
      * Safely executes an asynchronous streaming prompt. If the engine isn't initialized yet,
      * it automatically kicks off the initialization process in a thread-safe manner.
      */
-    suspend fun generateResponseStream(prompt: String): Flow<String> {
+    suspend fun generateResponseStream(prompt: String, file: java.io.File): Flow<String> {
         if (isClosed.get()) {
             throw IllegalStateException("Cannot generate responses on a closed OnDeviceFallback instance.")
         }
 
-        // Implicitly initialize if the library consumer forgot to call initialize() explicitly
-        if (!isInitialized.get()) {
-            initialize()
+        if (!isInitialized.get() || modelPath != file.absolutePath) {
+            initialize(file)
         }
 
         val activeConversation = conversation
@@ -95,7 +96,10 @@ class OnDeviceFallback(
      */
     override fun close() {
         if (isClosed.getAndSet(true)) return
+        closeInternal()
+    }
 
+    private fun closeInternal() {
         try {
             conversation?.close()
             engine?.close()
@@ -104,6 +108,7 @@ class OnDeviceFallback(
         } finally {
             conversation = null
             engine = null
+            isInitialized.set(false)
         }
     }
 }
