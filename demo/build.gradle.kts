@@ -1,6 +1,9 @@
+import java.util.Properties
+
 plugins {
     alias(libs.plugins.android.application)
     id("org.jetbrains.kotlin.plugin.compose")
+    alias(libs.plugins.serialization)
 }
 
 android {
@@ -15,6 +18,22 @@ android {
         versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+
+        val localProps = Properties()
+        val localPropsFile = rootProject.file("local.properties")
+        if (localPropsFile.exists()) {
+            localProps.load(localPropsFile.inputStream())
+        }
+        buildConfigField(
+            "String",
+            "MEMO_MODEL_RESOLVER_ENDPOINT",
+            "\"${localProps.getProperty("memo.model.resolver.endpoint", "")}\""
+        )
+        buildConfigField(
+            "String",
+            "GROQ_API_KEY",
+            "\"${localProps.getProperty("memo.cloud.api.key", "")}\""
+        )
     }
 
     buildTypes {
@@ -26,6 +45,7 @@ android {
     }
     buildFeatures {
         compose = true
+        buildConfig = true
     }
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11
@@ -58,4 +78,9 @@ dependencies {
     // Provides ComponentActivity.setContent { ... } to host Compose from standard Activities
     implementation(libs.androidx.activity.compose)
 
+    // Ktor for Cloud Inference
+    implementation(libs.ktor.client.android)
+    implementation(libs.ktor.client.content.negotiation)
+    implementation(libs.ktor.serialization.kotlinx.json)
+    implementation(libs.kotlinx.serialization.json)
 }

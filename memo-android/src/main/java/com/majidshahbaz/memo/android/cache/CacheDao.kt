@@ -1,4 +1,4 @@
-package com.majidshahbaz.memo.android.data.room
+package com.majidshahbaz.memo.android.cache
 
 import androidx.room.Dao
 import androidx.room.Insert

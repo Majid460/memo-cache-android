@@ -8,9 +8,9 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import com.majidshahbaz.memo.data.models.ChatMessage
+import com.majidshahbaz.memo.data.models.MessageSource
 
 
 @Composable
@@ -18,9 +18,6 @@ fun ChatTimeline(
     chatMessages: List<ChatMessage>,
     listState: LazyListState,
     onEditClicked: (String) -> Unit,
-    userBubbleColor: Color,
-    surfaceCardColor: Color,
-    neonElectricPurple: Color,
     modifier: Modifier = Modifier
 ) {
     LazyColumn(
@@ -41,13 +38,9 @@ fun ChatTimeline(
             if (showTimestamp) {
                 ChatTimestampDivider(timestamp = message.timestamp)
             }
-
             ChatMessageRow(
                 message = message,
-                onEditClicked = onEditClicked,
-                userBubbleColor = userBubbleColor,
-                surfaceCardColor = surfaceCardColor,
-                neonElectricPurple = neonElectricPurple
+                onEditClicked = onEditClicked
             )
         }
     }

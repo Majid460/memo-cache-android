@@ -2,6 +2,9 @@ package com.majidshahbaz.memo.android.data.room
 
 import androidx.room.Room
 import androidx.test.core.app.ApplicationProvider
+import com.majidshahbaz.memo.android.cache.CacheDao
+import com.majidshahbaz.memo.android.cache.CacheEntryEntity
+import com.majidshahbaz.memo.android.cache.MemoDatabase
 import kotlinx.coroutines.test.runTest
 import org.junit.After
 import org.junit.Assert.assertEquals

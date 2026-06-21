@@ -1,4 +1,4 @@
-package com.majidshahbaz.memo.android
+package com.majidshahbaz.memo.android.model
 
 import android.content.Context
 import com.google.ai.edge.litertlm.Conversation

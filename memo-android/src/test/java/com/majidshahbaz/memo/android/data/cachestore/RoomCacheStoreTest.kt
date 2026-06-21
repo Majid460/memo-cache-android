@@ -3,7 +3,8 @@ package com.majidshahbaz.memo.android.data.cachestore
 import android.content.Context
 import androidx.room.Room
 import androidx.test.core.app.ApplicationProvider
-import com.majidshahbaz.memo.android.data.room.MemoDatabase
+import com.majidshahbaz.memo.android.cache.RoomCacheStore
+import com.majidshahbaz.memo.android.cache.MemoDatabase
 import com.majidshahbaz.memo.core.cache.CacheEntry
 import kotlinx.coroutines.test.runTest
 import org.junit.After

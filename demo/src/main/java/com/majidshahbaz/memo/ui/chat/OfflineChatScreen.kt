@@ -1,103 +1,110 @@
 package com.majidshahbaz.memo.ui.chat
 
-import androidx.compose.foundation.interaction.DragInteraction
-import androidx.compose.foundation.interaction.PressInteraction
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.imePadding
+import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
+import com.majidshahbaz.memo.android.state.MemoNetworkState
 import com.majidshahbaz.memo.ui.chat.components.ChatBottomInputConsole
 import com.majidshahbaz.memo.ui.chat.components.ChatTimeline
+import com.majidshahbaz.memo.ui.chat.components.ChatTopBar
+import com.majidshahbaz.memo.ui.chat.components.DownloadProgressTile
+import com.majidshahbaz.memo.ui.chat.components.NoOfflineSupportDialog
+import kotlinx.coroutines.delay
+import kotlin.time.Duration.Companion.milliseconds
 
 @Composable
 fun OfflineChatScreen(viewModel: ChatViewModel) {
     val chatMessages by viewModel.messages.collectAsState()
+    val networkState by viewModel.networkState.collectAsState()
     var inputText by remember { mutableStateOf("") }
     val listState = rememberLazyListState()
+    val isGenerating by viewModel.isGenerating.collectAsState()
 
     var isAutoScrollEnabled by remember { mutableStateOf(true) }
-    val lastMessageTextLength = chatMessages.lastOrNull()?.text?.length ?: 0
+    var userIsManuallyScrolling by remember { mutableStateOf(false) }
+    var showNoOfflineDialog by remember { mutableStateOf(false) }
 
-    LaunchedEffect(listState.interactionSource) {
-        listState.interactionSource.interactions.collect { interaction ->
-            when (interaction) {
-                is DragInteraction.Start, is PressInteraction.Press -> {
-                    isAutoScrollEnabled = false
-                }
-            }
-        }
-    }
-
-    val isAtAbsoluteBottom by remember {
-        derivedStateOf {
-            val layoutInfo = listState.layoutInfo
-            val visibleItems = layoutInfo.visibleItemsInfo
-            if (visibleItems.isEmpty()) true else {
-                val lastVisibleItem = visibleItems.last()
-                lastVisibleItem.index == layoutInfo.totalItemsCount - 1 &&
-                        lastVisibleItem.offset + lastVisibleItem.size <= layoutInfo.viewportEndOffset
-            }
-        }
-    }
-
-    LaunchedEffect(isAtAbsoluteBottom) {
-        if (isAtAbsoluteBottom) {
-            isAutoScrollEnabled = true
-        }
-    }
-
-    LaunchedEffect(chatMessages.size, lastMessageTextLength) {
-        if (chatMessages.isNotEmpty()) {
-            if (lastMessageTextLength <= 1) {
-                isAutoScrollEnabled = true
-                listState.scrollToItem(chatMessages.lastIndex)
-            }
-            else if (isAutoScrollEnabled) {
+    // Single source of truth for auto-scroll during streaming —
+    // throttled, with a re-check after the delay to respect manual scroll
+    LaunchedEffect(chatMessages.lastOrNull()?.text?.length) {
+        if (isAutoScrollEnabled && !userIsManuallyScrolling && chatMessages.isNotEmpty()) {
+            delay(80.milliseconds)
+            if (isAutoScrollEnabled && !userIsManuallyScrolling) {
                 listState.scrollToItem(chatMessages.lastIndex)
             }
         }
     }
 
-    val darkBackground = Color(0xFF111214)
-    val surfaceCardColor = Color(0xFF1E1F22)
-    val neonElectricPurple = Color(0xFF9F7AEA)
-    val userBubbleColor = Color(0xFF2B2D31)
 
     Surface(
         modifier = Modifier.fillMaxSize(),
-        color = darkBackground
+        color = MaterialTheme.colorScheme.background
     ) {
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .statusBarsPadding()
-                .navigationBarsPadding()
-                .imePadding()
-        ) {
-            ChatTimeline(
-                chatMessages = chatMessages,
-                listState = listState,
-                onEditClicked = { originalText -> inputText = originalText },
-                userBubbleColor = userBubbleColor,
-                surfaceCardColor = surfaceCardColor,
-                neonElectricPurple = neonElectricPurple,
-                modifier = Modifier.weight(1f) // Look, no pointerInput modifiers competing for gestures!
-            )
-
-            ChatBottomInputConsole(
-                inputText = inputText,
-                onValueChange = { inputText = it },
-                onSubmit = { prompt ->
-                    isAutoScrollEnabled = true // Force reset lock when user sends a new message
-                    viewModel.askOfflineModel(prompt)
-                    inputText = ""
-                },
-                darkBackground = darkBackground,
-                surfaceCardColor = surfaceCardColor,
-                neonElectricPurple = neonElectricPurple
-            )
+        Box(modifier = Modifier.fillMaxSize()) {
+            if (showNoOfflineDialog) {
+                NoOfflineSupportDialog(
+                    onDownloadClick = {
+                        showNoOfflineDialog = false
+                        viewModel.downloadModel()
+                    },
+                    onDismiss = { showNoOfflineDialog = false }
+                )
+            }
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .statusBarsPadding()
+                    .navigationBarsPadding()
+                    .imePadding()
+            ) {
+                ChatTopBar(
+                    networkState = networkState,
+                    isModelDownloaded = viewModel.isModelDownloaded,
+                    title = "Memo",
+                    onDownloadModelClick = { viewModel.downloadModel() }
+                )
+                ChatTimeline(
+                    chatMessages = chatMessages,
+                    listState = listState,
+                    onEditClicked = { originalText -> inputText = originalText },
+                    modifier = Modifier.weight(1f)
+                )
+                DownloadProgressTile(networkState = networkState)
+                ChatBottomInputConsole(
+                    networkState = networkState,
+                    inputText = inputText,
+                    onValueChange = { inputText = it },
+                    enabled = !isGenerating,
+                    isGenerating = isGenerating,
+                    onStop = {
+                        viewModel.stopGeneration()
+                    },
+                    onSubmit = { prompt ->
+                        if (networkState is MemoNetworkState.OfflineNoModel) {
+                            showNoOfflineDialog = true
+                        } else {
+                            isAutoScrollEnabled = true
+                            userIsManuallyScrolling = false
+                            viewModel.askOfflineModel(prompt)
+                            inputText = ""
+                        }
+                    }
+                )
+            }
         }
     }
 }

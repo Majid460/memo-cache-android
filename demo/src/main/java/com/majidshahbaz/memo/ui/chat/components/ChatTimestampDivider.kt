@@ -25,7 +25,7 @@ fun ChatTimestampDivider(timestamp: Date, modifier: Modifier = Modifier) {
         Text(
             text = formatChatTime(timestamp),
             style = MaterialTheme.typography.labelMedium,
-            color = Color.Gray
+            color = com.majidshahbaz.memo.ui.theme.GrayText
         )
     }
 }

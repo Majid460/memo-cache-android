@@ -1,4 +1,4 @@
-package com.majidshahbaz.memo.core.costanalyzer
+package com.majidshahbaz.memo.core.cost
 
 object CostEstimator {
 
