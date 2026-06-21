@@ -34,7 +34,14 @@ class ModelFileManager(
     }
 
     fun isAnyModelDownloaded(): Boolean {
-        return ModelTier.values().any { isModelDownloaded(it) }
+        return ModelTier.entries.any { isModelDownloaded(it) }
+    }
+
+    fun deleteModel(tier: ModelTier): Boolean {
+        val file = getModelFile(tier)
+        return if (file.exists()) {
+            file.delete()
+        } else false
     }
 
     fun downloadModel(tier: ModelTier, downloadUrl: String): Flow<MemoNetworkState> = flow {

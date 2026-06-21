@@ -32,6 +32,7 @@ fun ChatBottomInputConsole(
     val placeholderText = when (networkState) {
         is MemoNetworkState.Online -> "Ask anything..."
         is MemoNetworkState.OfflineReady -> "Ask Gemma 3 (offline)..."
+        is MemoNetworkState.OfflineAuto -> "Ask Gemma 3 (offline-auto)..."
         is MemoNetworkState.OfflineNoModel -> "Offline — no model available"
         is MemoNetworkState.DownloadingModel,
         is MemoNetworkState.DownloadProgress -> "Downloading offline model..."

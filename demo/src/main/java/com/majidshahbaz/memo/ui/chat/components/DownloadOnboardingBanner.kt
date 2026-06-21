@@ -72,7 +72,7 @@ fun DownloadOnboardingBanner(
                         fontSize = 15.sp
                     )
                     Text(
-                        text = "Tap the cloud icon above to download offline support.",
+                        text = "Tap the cloud icon in the menu above to download offline support.",
                         color = White60,
                         fontSize = 13.sp,
                         lineHeight = 18.sp

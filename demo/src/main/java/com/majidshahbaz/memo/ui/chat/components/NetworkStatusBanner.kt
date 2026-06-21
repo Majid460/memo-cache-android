@@ -41,6 +41,13 @@ fun NetworkStatusBanner(
                 listOf(OfflineReadyGradientStart, OfflineReadyGradientEnd)
             )
         )
+        is MemoNetworkState.OfflineAuto -> Triple(
+            "Offline Mode (Auto)",
+            OfflineReadyDot,
+            Brush.horizontalGradient(
+                listOf(OfflineReadyGradientStart, OfflineReadyGradientEnd)
+            )
+        )
         is MemoNetworkState.OfflineNoModel -> Triple(
             "Offline • No Model Available",
             OfflineNoModelDot,

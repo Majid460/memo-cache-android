@@ -38,6 +38,14 @@ class Memo private constructor(
         }
     }
 
+    fun cancelDownload() {
+        stateManager.cancelDownload()
+    }
+
+    fun deleteModel(tier: ModelTier) {
+        stateManager.deleteModel(tier)
+    }
+
     fun resolve(
         prompt: String,
         model: String = "gemini-1.5-flash",

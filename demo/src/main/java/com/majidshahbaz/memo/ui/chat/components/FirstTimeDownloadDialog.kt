@@ -9,11 +9,13 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
+import com.majidshahbaz.memo.R
 import com.majidshahbaz.memo.android.model.ModelTier
 import com.majidshahbaz.memo.ui.theme.*
 
@@ -35,6 +37,13 @@ fun FirstTimeDownloadDialog(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
+                Icon(
+                    painter = painterResource(id = R.drawable.logo),
+                    contentDescription = "Memo Logo",
+                    modifier = Modifier.size(64.dp),
+                    tint = Color.Unspecified
+                )
+
                 Text(
                     text = "Welcome to Memo",
                     style = MaterialTheme.typography.headlineSmall,

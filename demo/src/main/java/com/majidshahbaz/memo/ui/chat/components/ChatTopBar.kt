@@ -10,17 +10,23 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CloudDownload
 import androidx.compose.material.icons.filled.Menu
+import androidx.compose.material.icons.filled.Stop
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.majidshahbaz.memo.R
 import com.majidshahbaz.memo.android.hardware.HardwareProfile
 import com.majidshahbaz.memo.android.model.ModelTier
 import com.majidshahbaz.memo.android.state.MemoNetworkState
+import com.majidshahbaz.memo.ui.chat.AiMode
 import com.majidshahbaz.memo.ui.chat.StorageUsage
 import com.majidshahbaz.memo.ui.theme.*
 
@@ -31,8 +37,13 @@ fun ChatTopBar(
     selectedTier: ModelTier?,
     storageUsage: StorageUsage,
     hardwareProfile: HardwareProfile?,
+    userAiMode: AiMode,
+    onAiModeToggle: () -> Unit,
     onTierSelected: (ModelTier) -> Unit,
     onDownloadModelClick: () -> Unit,
+    onCancelDownloadClick: () -> Unit,
+    onDeleteModelClick: (ModelTier) -> Unit,
+    isTierDownloaded: (ModelTier) -> Boolean,
     title: String = "Memo",
     modifier: Modifier = Modifier
 ) {
@@ -43,6 +54,8 @@ fun ChatTopBar(
             "Online • Cloud Mode" to OnlineDot
         is MemoNetworkState.OfflineReady ->
             "Offline Support Active" to OfflineReadyDot
+        is MemoNetworkState.OfflineAuto ->
+            "Offline Mode (Auto)" to OfflineReadyDot
         is MemoNetworkState.OfflineNoModel ->
             "Offline • No Model Available" to OfflineNoModelDot
         is MemoNetworkState.DownloadingModel ->
@@ -72,12 +85,59 @@ fun ChatTopBar(
                     )
                 }
 
+                Icon(
+                    painter = painterResource(id = R.drawable.logo),
+                    contentDescription = null,
+                    modifier = Modifier.size(24.dp).padding(start = 4.dp),
+                    tint = Color.Unspecified
+                )
+
                 DropdownMenu(
                     expanded = menuExpanded,
                     onDismissRequest = { menuExpanded = false },
                     modifier = Modifier.background(SurfaceCardColor)
                 ) {
-                    // Task 2: Move Cloud Action Into Menu
+                    Text(
+                        "AI Mode",
+                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
+                        style = MaterialTheme.typography.labelLarge,
+                        color = OfflineReadyDot
+                    )
+
+                    DropdownMenuItem(
+                        text = {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Column {
+                                    Text("Offline Mode", color = PureWhite)
+                                    Text(
+                                        if (userAiMode == AiMode.OFFLINE) "Using local model" else "Using cloud (if available)",
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = White85
+                                    )
+                                }
+                                Switch(
+                                    checked = userAiMode == AiMode.OFFLINE,
+                                    onCheckedChange = { onAiModeToggle() },
+                                    colors = SwitchDefaults.colors(
+                                        checkedThumbColor = PureWhite,
+                                        checkedTrackColor = NeonElectricPurple,
+                                        checkedBorderColor = NeonElectricPurple,
+                                        uncheckedThumbColor = GrayText,
+                                        uncheckedTrackColor = White10,
+                                        uncheckedBorderColor = White15
+                                    )
+                                )
+                            }
+                        },
+                        onClick = onAiModeToggle
+                    )
+
+                    HorizontalDivider(color = White15)
+
                     val showDownloadButton = !isModelDownloaded &&
                             (networkState is MemoNetworkState.OfflineNoModel || networkState is MemoNetworkState.Online)
 
@@ -95,12 +155,32 @@ fun ChatTopBar(
                         HorizontalDivider(color = White15)
                     }
 
-                    // Task 3: Model Management Menu
+                    if (networkState is MemoNetworkState.DownloadingModel || networkState is MemoNetworkState.DownloadProgress) {
+                        DropdownMenuItem(
+                            text = { Text("Cancel Download", color = ErrorRed) },
+                            onClick = {
+                                menuExpanded = false
+                                onCancelDownloadClick()
+                            },
+                            leadingIcon = {
+                                Icon(Icons.Default.Stop, contentDescription = null, tint = ErrorRed)
+                            }
+                        )
+                        HorizontalDivider(color = White15)
+                    }
+
                     Text(
-                        "Models",
-                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
+                        "Local Models",
+                        modifier = Modifier.padding(start = 12.dp, end = 12.dp, top = 8.dp, bottom = 2.dp),
                         style = MaterialTheme.typography.labelLarge,
                         color = OfflineReadyDot
+                    )
+                    Text(
+                        "Select a model to download and enable on-device processing. These models run locally for maximum privacy and offline availability.",
+                        modifier = Modifier.padding(start = 12.dp, end = 12.dp, bottom = 8.dp),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = White60,
+                        lineHeight = 14.sp
                     )
 
                     ModelTier.entries.forEach { tier ->
@@ -116,18 +196,24 @@ fun ChatTopBar(
                                 onTierSelected(tier)
                             },
                             trailingIcon = {
-                                RadioButton(
-                                    selected = selectedTier == tier,
-                                    onClick = null,
-                                    colors = RadioButtonDefaults.colors(selectedColor = NeonElectricPurple)
-                                )
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    if (isTierDownloaded(tier)) {
+                                        IconButton(onClick = { onDeleteModelClick(tier) }) {
+                                            Icon(Icons.Default.Delete, contentDescription = "Delete", tint = ErrorRed)
+                                        }
+                                    }
+                                    RadioButton(
+                                        selected = selectedTier == tier,
+                                        onClick = null,
+                                        colors = RadioButtonDefaults.colors(selectedColor = NeonElectricPurple)
+                                    )
+                                }
                             }
                         )
                     }
 
                     HorizontalDivider(color = White15)
 
-                    // Task 5: Storage and Resource Usage Section
                     Text(
                         "Storage & Resources",
                         modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
