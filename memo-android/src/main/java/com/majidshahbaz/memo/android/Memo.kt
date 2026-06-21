@@ -4,6 +4,7 @@ import android.content.Context
 import com.majidshahbaz.memo.android.cache.MemoDatabase
 import com.majidshahbaz.memo.android.cache.RoomCacheStore
 import com.majidshahbaz.memo.android.model.ModelFileManager
+import com.majidshahbaz.memo.android.model.ModelTier
 import com.majidshahbaz.memo.android.model.OnDeviceFallback
 import com.majidshahbaz.memo.android.state.MemoNetworkState
 import com.majidshahbaz.memo.android.state.MemoStateManager
@@ -27,18 +28,20 @@ class Memo private constructor(
     )
     val networkState: StateFlow<MemoNetworkState> = stateManager.networkState
 
-    val isModelDownloaded: Boolean
-        get() = modelFileManager.isModelDownloaded()
+    fun isModelDownloaded(tier: ModelTier): Boolean = modelFileManager.isModelDownloaded(tier)
 
-    fun downloadModel() {
+    fun isAnyModelDownloaded(): Boolean = modelFileManager.isAnyModelDownloaded()
+
+    fun downloadModel(tier: ModelTier) {
         internalScope.launch {
-            stateManager.downloadModelIfNeeded().collect { /* updates flow into networkState internally */ }
+            stateManager.downloadModelIfNeeded(tier).collect { /* updates flow into networkState internally */ }
         }
     }
 
     fun resolve(
         prompt: String,
         model: String = "gemini-1.5-flash",
+        tier: ModelTier = ModelTier.LITE,
         cloudApiCall: (suspend (String) -> String)? = null
     ): Flow<String> = flow {
         // 1. Check cache first, regardless of online/offline state
@@ -62,16 +65,17 @@ class Memo private constructor(
         }
 
         // 3. Offline (or no cloud call provided) → use on-device model if available
-        if (!modelFileManager.isModelDownloaded()) {
+        if (!modelFileManager.isModelDownloaded(tier)) {
             throw IllegalStateException(
-                "No network and no offline model available."
+                "No network and no offline model available for tier ${tier.label}."
             )
         }
 
-        onDeviceFallback.initialize()
+        val modelFile = modelFileManager.getModelFile(tier)
+        onDeviceFallback.initialize(modelFile)
 
         var fullResponse = ""
-        onDeviceFallback.generateResponseStream(prompt).collect { token ->
+        onDeviceFallback.generateResponseStream(prompt, modelFile).collect { token ->
             fullResponse += token
             emit(token)
         }
@@ -95,10 +99,16 @@ class Memo private constructor(
         private var resolverEndpoint: String? = null
         private var customModelPath: String? = null
         private var cacheStore: CacheStore? = null
+        private var defaultTier: ModelTier = ModelTier.LITE
 
         fun autoDownloadModel(enabled: Boolean, downloadUrl: String? = null): Builder {
             this.autoDownload = enabled
             this.downloadUrl = downloadUrl
+            return this
+        }
+
+        fun defaultTier(tier: ModelTier): Builder {
+            this.defaultTier = tier
             return this
         }
 
@@ -132,7 +142,7 @@ class Memo private constructor(
             )
             val fallback = OnDeviceFallback(context)
 
-            stateManager.startObserving()
+            stateManager.startObserving(defaultTier)
 
             return Memo(
                 memoCache = memoCache,

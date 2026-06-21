@@ -4,6 +4,7 @@ import android.content.Context
 import com.majidshahbaz.memo.android.hardware.HardwareProfiler
 import com.majidshahbaz.memo.android.model.ModelFileManager
 import com.majidshahbaz.memo.android.model.ModelResolverApi
+import com.majidshahbaz.memo.android.model.ModelTier
 import com.majidshahbaz.memo.android.network.NetworkObserver
 import com.majidshahbaz.memo.android.network.NetworkStatus
 import kotlinx.coroutines.CoroutineScope
@@ -33,14 +34,14 @@ class MemoStateManager(
     )
     val networkState: StateFlow<MemoNetworkState> = _networkState.asStateFlow()
 
-    fun startObserving() {
+    fun startObserving(currentTier: ModelTier) {
         scope.launch {
             networkObserver.observe().collect { status ->
                 _networkState.value = when (status) {
                     NetworkStatus.Available -> MemoNetworkState.Online
 
                     NetworkStatus.Unavailable -> {
-                        if (modelFileManager.isModelDownloaded()) {
+                        if (modelFileManager.isModelDownloaded(currentTier)) {
                             MemoNetworkState.OfflineReady
                         } else {
                             MemoNetworkState.OfflineNoModel
@@ -51,15 +52,15 @@ class MemoStateManager(
         }
     }
 
-    fun downloadModelIfNeeded(): Flow<MemoNetworkState> {
-        if (modelFileManager.isModelDownloaded()) {
+    fun downloadModelIfNeeded(tier: ModelTier): Flow<MemoNetworkState> {
+        if (modelFileManager.isModelDownloaded(tier)) {
             return flowOf(MemoNetworkState.OfflineReady)
         }
 
         // Priority: explicit URL > resolver endpoint > nothing available
         val directUrl = modelDownloadUrl
         if (directUrl != null) {
-            return modelFileManager.downloadModel(directUrl).also { flow ->
+            return modelFileManager.downloadModel(tier, directUrl).also { flow ->
                 scope.launch {
                     flow.collect { state -> _networkState.value = state }
                 }
@@ -81,7 +82,7 @@ class MemoStateManager(
                     return@flow
                 }
 
-                modelFileManager.downloadModel(resolved.downloadUrl).collect { state ->
+                modelFileManager.downloadModel(tier, resolved.downloadUrl).collect { state ->
                     emit(state)
                 }
             }.also { flow ->

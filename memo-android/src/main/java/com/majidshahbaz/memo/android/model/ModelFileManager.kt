@@ -20,20 +20,29 @@ class ModelFileManager(
             "Gemma3-1B-IT_multi-prefill-seq_q4_block128_ekv1280.task"
     }
 
-    val modelFile: File
-        get() = if (customModelPath != null) {
+    fun getModelFile(tier: ModelTier): File {
+        return if (customModelPath != null) {
             File(customModelPath)
         } else {
-            File(context.filesDir, "$DEFAULT_MODEL_DIR/$DEFAULT_MODEL_NAME")
+            File(context.filesDir, "${DEFAULT_MODEL_DIR}/${tier.fileName}")
         }
+    }
 
-    fun isModelDownloaded(): Boolean = modelFile.exists() && modelFile.length() > 0
+    fun isModelDownloaded(tier: ModelTier): Boolean {
+        val file = getModelFile(tier)
+        return file.exists() && file.length() > 0
+    }
 
-    fun downloadModel(downloadUrl: String): Flow<MemoNetworkState> = flow {
+    fun isAnyModelDownloaded(): Boolean {
+        return ModelTier.values().any { isModelDownloaded(it) }
+    }
+
+    fun downloadModel(tier: ModelTier, downloadUrl: String): Flow<MemoNetworkState> = flow {
         emit(MemoNetworkState.DownloadingModel)
 
         try {
-            modelFile.parentFile?.mkdirs()
+            val file = getModelFile(tier)
+            file.parentFile?.mkdirs()
 
             val connection = URL(downloadUrl).openConnection() as HttpURLConnection
             connection.connect()
@@ -42,7 +51,7 @@ class ModelFileManager(
             var downloadedBytes = 0L
 
             connection.inputStream.use { input ->
-                modelFile.outputStream().use { output ->
+                file.outputStream().use { output ->
                     val buffer = ByteArray(8192)
                     var bytesRead: Int
 
@@ -60,7 +69,7 @@ class ModelFileManager(
 
             emit(MemoNetworkState.OfflineReady)
         } catch (e: Exception) {
-            modelFile.delete()
+            getModelFile(tier).delete()
             emit(MemoNetworkState.OfflineNoModel)
         }
     }.flowOn(Dispatchers.IO)
