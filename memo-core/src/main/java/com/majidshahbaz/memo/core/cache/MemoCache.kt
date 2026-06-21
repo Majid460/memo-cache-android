@@ -1,11 +1,8 @@
-package com.majidshahbaz.memo.core
+package com.majidshahbaz.memo.core.cache
 
-import com.majidshahbaz.memo.core.cache.CacheEntry
-import com.majidshahbaz.memo.core.cache.CacheKeyGenerator
-import com.majidshahbaz.memo.core.cache.CacheStore
-import com.majidshahbaz.memo.core.costanalyzer.CostEstimator
-import com.majidshahbaz.memo.core.costanalyzer.MemoStats
-import com.majidshahbaz.memo.core.costanalyzer.StatsTracker
+import com.majidshahbaz.memo.core.cost.CostEstimator
+import com.majidshahbaz.memo.core.stats.MemoStats
+import com.majidshahbaz.memo.core.stats.StatsTracker
 
 
 enum class ResponseSource { CACHE, NETWORK, OFFLINE_FALLBACK }
@@ -57,4 +54,19 @@ class MemoCache(
     }
 
     fun getStats(): MemoStats = statsTracker.getStats()
+
+    /**
+     * Checks the cache for an existing, non-expired entry without
+     * triggering a network/fallback call on miss. Returns null if
+     * there's no valid-cached entry.
+     */
+    suspend fun peek(prompt: String, model: String): String? {
+        val key = CacheKeyGenerator.generate(prompt, model)
+        val cached = store.get(key)
+        return if (cached != null && !cached.isExpired()) {
+            cached.response
+        } else {
+            null
+        }
+    }
 }

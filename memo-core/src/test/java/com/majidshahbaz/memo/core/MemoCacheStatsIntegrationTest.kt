@@ -1,5 +1,6 @@
 package com.majidshahbaz.memo.core
 
+import com.majidshahbaz.memo.core.cache.MemoCache
 import kotlinx.coroutines.test.runTest
 import org.junit.Test
 import org.junit.Assert.*

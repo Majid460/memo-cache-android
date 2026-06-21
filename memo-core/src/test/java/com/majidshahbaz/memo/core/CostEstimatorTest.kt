@@ -1,6 +1,6 @@
 package com.majidshahbaz.memo.core
 
-import com.majidshahbaz.memo.core.costanalyzer.CostEstimator
+import com.majidshahbaz.memo.core.cost.CostEstimator
 
 import org.junit.Test
 import org.junit.Assert.*

@@ -1,7 +1,4 @@
-package com.majidshahbaz.memo.android.data.cachestore
-
-import com.majidshahbaz.memo.android.data.room.CacheDao
-import com.majidshahbaz.memo.android.data.room.CacheEntryEntity
+package com.majidshahbaz.memo.android.cache
 
 import com.majidshahbaz.memo.core.cache.CacheEntry
 import com.majidshahbaz.memo.core.cache.CacheStore

@@ -1,0 +1,4 @@
+# Required: your own deployed model-resolver backend.
+# See memo-backend/README.md for how to deploy your own.
+# This is the DEMO app's configuration only — NOT required to use the Memo library itself.
+memo.model.resolver.endpoint=https://your-own-backend.vercel.app/api/resolve-model

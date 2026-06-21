@@ -1,6 +1,8 @@
 package com.majidshahbaz.memo.core
 
-import com.majidshahbaz.memo.core.costanalyzer.StatsTracker
+import com.majidshahbaz.memo.core.cache.MemoResponse
+import com.majidshahbaz.memo.core.cache.ResponseSource
+import com.majidshahbaz.memo.core.stats.StatsTracker
 
 import org.junit.Test
 import org.junit.Assert.*
@@ -24,7 +26,8 @@ class StatsTrackerTest {
     @Test
     fun `recording a cache hit increases dollars saved`() {
         val tracker = StatsTracker()
-        val response = MemoResponse(text = "cached answer", source = ResponseSource.CACHE, tokensSaved = 1000)
+        val response =
+            MemoResponse(text = "cached answer", source = ResponseSource.CACHE, tokensSaved = 1000)
 
         tracker.record(response, "gpt-4")
         val stats = tracker.getStats()
