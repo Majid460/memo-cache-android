@@ -123,9 +123,9 @@ Add JitPack to your project's repositories:
 
 ```kotlin
 dependencyResolutionManagement {
-  repositories {
-    maven("https://jitpack.io")
-  }
+    repositories {
+        maven("https://jitpack.io")
+    }
 }
 ```
 
@@ -133,7 +133,7 @@ Add the dependency:
 
 ```kotlin
 dependencies {
-  implementation("com.github.Majid460:memo-cache-android:1.0.0")
+    implementation("com.github.Majid460:memo-cache-android:1.0.0")
 }
 ```
 
@@ -145,19 +145,19 @@ dependencies {
 
 ```kotlin
 val memo = Memo.Builder(context)
-  .autoDownloadModel(true)
-  .build()
+    .autoDownloadModel(true)
+    .build()
 
 lifecycleScope.launch {
-  memo.resolve(
-    prompt = "Summarize this article...",
-    model = "your-model-name",
-    cloudApiCall = { prompt -> yourApiClient.chat(prompt) }
-  ).collect { token ->
-    // Tokens stream in — from cache (instant),
-    // your cloud API, or the on-device model.
-    // No need to know which; Memo handles it.
-  }
+    memo.resolve(
+        prompt = "Summarize this article...",
+        model = "your-model-name",
+        cloudApiCall = { prompt -> yourApiClient.chat(prompt) }
+    ).collect { token ->
+        // Tokens stream in — from cache (instant),
+        // your cloud API, or the on-device model.
+        // No need to know which; Memo handles it.
+    }
 }
 ```
 
@@ -165,8 +165,8 @@ Don't forget to release resources when done:
 
 ```kotlin
 override fun onCleared() {
-  super.onCleared()
-  memo.close()
+    super.onCleared()
+    memo.close()
 }
 ```
 
@@ -181,15 +181,15 @@ Memo needs to know where to download its offline fallback model from. You have t
 **1. Direct URL — simplest, no backend required:**
 ```kotlin
 val memo = Memo.Builder(context)
-  .autoDownloadModel(true, downloadUrl = "https://your-cdn.com/your-model.task")
-  .build()
+    .autoDownloadModel(true, downloadUrl = "https://your-cdn.com/your-model.task")
+    .build()
 ```
 
 **2. Local file you manage yourself:**
 ```kotlin
 val memo = Memo.Builder(context)
-  .modelPath("/data/local/tmp/llm/your-model.task")
-  .build()
+    .modelPath("/data/local/tmp/llm/your-model.task")
+    .build()
 ```
 
 **3. Hardware-aware resolver backend** (see below) — automatically picks the right model tier per device.
@@ -200,9 +200,9 @@ For apps that want to serve different model sizes to different devices (e.g., a 
 
 ```kotlin
 val memo = Memo.Builder(context)
-  .modelResolverEndpoint("https://your-backend.vercel.app/api/resolve-model")
-  .autoDownloadModel(true)
-  .build()
+    .modelResolverEndpoint("https://your-backend.vercel.app/api/resolve-model")
+    .autoDownloadModel(true)
+    .build()
 ```
 
 Memo's `HardwareProfiler` automatically collects device RAM and available storage, sends them to your endpoint, and downloads whichever model URL comes back.
@@ -228,15 +228,15 @@ By default, Memo persists its cache via Room. To use your own storage backend (e
 
 ```kotlin
 class MyCustomCacheStore : CacheStore {
-  override suspend fun get(key: String): CacheEntry? { /* ... */ }
-  override suspend fun put(entry: CacheEntry) { /* ... */ }
-  override suspend fun evictExpired() { /* ... */ }
-  override suspend fun clear() { /* ... */ }
+    override suspend fun get(key: String): CacheEntry? { /* ... */ }
+    override suspend fun put(entry: CacheEntry) { /* ... */ }
+    override suspend fun evictExpired() { /* ... */ }
+    override suspend fun clear() { /* ... */ }
 }
 
 val memo = Memo.Builder(context)
-  .cacheStore(MyCustomCacheStore())
-  .build()
+    .cacheStore(MyCustomCacheStore())
+    .build()
 ```
 
 ### Secrets & API Keys
@@ -255,23 +255,23 @@ Read these into `BuildConfig` in your app's `build.gradle.kts`:
 import java.util.Properties
 
 android {
-  defaultConfig {
-    val localProps = Properties()
-    val localPropsFile = rootProject.file("local.properties")
-    if (localPropsFile.exists()) {
-      localProps.load(localPropsFile.inputStream())
-    }
+    defaultConfig {
+        val localProps = Properties()
+        val localPropsFile = rootProject.file("local.properties")
+        if (localPropsFile.exists()) {
+            localProps.load(localPropsFile.inputStream())
+        }
 
-    buildConfigField(
-      "String", "MODEL_RESOLVER_ENDPOINT",
-      "\"${localProps.getProperty("memo.model.resolver.endpoint", "")}\""
-    )
-    buildConfigField(
-      "String", "CLOUD_API_KEY",
-      "\"${localProps.getProperty("memo.cloud.api.key", "")}\""
-    )
-  }
-  buildFeatures { buildConfig = true }
+        buildConfigField(
+            "String", "MODEL_RESOLVER_ENDPOINT",
+            "\"${localProps.getProperty("memo.model.resolver.endpoint", "")}\""
+        )
+        buildConfigField(
+            "String", "CLOUD_API_KEY",
+            "\"${localProps.getProperty("memo.cloud.api.key", "")}\""
+        )
+    }
+    buildFeatures { buildConfig = true }
 }
 ```
 
@@ -306,11 +306,11 @@ Then reference safely in code: `BuildConfig.MODEL_RESOLVER_ENDPOINT`, `BuildConf
 
 ```kotlin
 sealed class MemoNetworkState {
-  object Online
-  object OfflineReady
-  object OfflineNoModel
-  object DownloadingModel
-  data class DownloadProgress(val percent: Int)
+    object Online
+    object OfflineReady
+    object OfflineNoModel
+    object DownloadingModel
+    data class DownloadProgress(val percent: Int)
 }
 ```
 
@@ -318,9 +318,9 @@ sealed class MemoNetworkState {
 
 ```kotlin
 data class MemoResponse(
-  val text: String,
-  val source: ResponseSource,   // CACHE, NETWORK, or OFFLINE_FALLBACK
-  val tokensSaved: Int = 0
+    val text: String,
+    val source: ResponseSource,   // CACHE, NETWORK, or OFFLINE_FALLBACK
+    val tokensSaved: Int = 0
 )
 ```
 
