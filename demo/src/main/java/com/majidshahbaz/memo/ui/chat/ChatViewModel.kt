@@ -9,11 +9,15 @@ import com.majidshahbaz.memo.android.state.MemoNetworkState
 import com.majidshahbaz.memo.data.models.ChatMessage
 import com.majidshahbaz.memo.data.models.MessageSource
 import com.majidshahbaz.memo.data.network.GroqApiClient
+import com.majidshahbaz.memo.data.preferences.UserPreferences
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
@@ -43,6 +47,11 @@ class ChatViewModel(application: Application) : AndroidViewModel(application) {
      * of Memo.resolve(); any OpenAI-compatible or custom provider works the same way.
      */
     private val groqClient = GroqApiClient(BuildConfig.GROQ_API_KEY)
+
+    private val userPreferences = UserPreferences(application.applicationContext)
+    val showDownloadOnboarding = userPreferences.downloadOnboardingShown
+        .map { shown -> !shown }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), false)
 
     private val _messages = MutableStateFlow<List<ChatMessage>>(emptyList())
     val messages = _messages.asStateFlow()
@@ -108,6 +117,12 @@ class ChatViewModel(application: Application) : AndroidViewModel(application) {
             }
         }
     }
+    fun dismissOnboarding() {
+        viewModelScope.launch {
+            userPreferences.setDownloadOnboardingShown(true)
+        }
+    }
+
     fun stopGeneration() {
         _isGenerating.value = false
         generationJob?.cancel()

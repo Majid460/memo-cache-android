@@ -21,6 +21,7 @@ import com.majidshahbaz.memo.android.state.MemoNetworkState
 import com.majidshahbaz.memo.ui.chat.components.ChatBottomInputConsole
 import com.majidshahbaz.memo.ui.chat.components.ChatTimeline
 import com.majidshahbaz.memo.ui.chat.components.ChatTopBar
+import com.majidshahbaz.memo.ui.chat.components.DownloadOnboardingBanner
 import com.majidshahbaz.memo.ui.chat.components.DownloadProgressTile
 import com.majidshahbaz.memo.ui.chat.components.NoOfflineSupportDialog
 import kotlinx.coroutines.delay
@@ -33,6 +34,7 @@ fun OfflineChatScreen(viewModel: ChatViewModel) {
     var inputText by remember { mutableStateOf("") }
     val listState = rememberLazyListState()
     val isGenerating by viewModel.isGenerating.collectAsState()
+    val showOnboarding by viewModel.showDownloadOnboarding.collectAsState()
 
     var isAutoScrollEnabled by remember { mutableStateOf(true) }
     var userIsManuallyScrolling by remember { mutableStateOf(false) }
@@ -76,6 +78,10 @@ fun OfflineChatScreen(viewModel: ChatViewModel) {
                     isModelDownloaded = viewModel.isModelDownloaded,
                     title = "Memo",
                     onDownloadModelClick = { viewModel.downloadModel() }
+                )
+                DownloadOnboardingBanner(
+                    isVisible = showOnboarding && !viewModel.isModelDownloaded,
+                    onDismiss = { viewModel.dismissOnboarding() }
                 )
                 ChatTimeline(
                     chatMessages = chatMessages,
