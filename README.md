@@ -356,30 +356,33 @@ Access via `memo.getStats()` on the underlying `MemoCache` (exposed for analytic
 
 Memo is built as three independent layers:
 
-```
-┌─────────────────────────────────────────┐
-│              Your App                    │
-│         (calls memo.resolve())           │
-└────────────────────┬──────────────────────┘
-                      │
-┌─────────────────────▼──────────────────────┐
-│                  Memo                       │
-│         (public facade, Builder pattern)    │
-├──────────────────────────────────────────────┤
-│  MemoStateManager  │  MemoCache  │  OnDevice  │
-│  (network + model) │  (caching)  │  Fallback   │
-└──────────────────────────────────────────────┘
-                      │
-        ┌─────────────┴─────────────┐
-        │                           │
-┌───────▼────────┐         ┌───────▼────────┐
-│  memo-core      │         │  memo-android  │
-│  (pure Kotlin)  │         │  (Room, LiteRT,│
-│  hashing, TTL,  │         │  Network APIs) │
-│  cache logic    │         │                │
-└─────────────────┘         └────────────────┘
-```
+```mermaid
+graph TD
+    App["Your App\ncalls memo.resolve()"]
 
+    App --> Memo
+
+    subgraph Memo["Memo Facade"]
+        direction TB
+        SM["MemoStateManager\nnetwork + model state"]
+        MC["MemoCache\ncaching + TTL"]
+        OD["OnDeviceFallback\nlocal LiteRT engine"]
+    end
+
+    Memo --> Core
+    Memo --> Lib
+
+    Core["memo-core\npure Kotlin\nhashing · TTL · cost"]
+    Lib["memo-android\nRoom · LiteRT · Network"]
+
+    style App fill:#1a1a2e,stroke:#9F7AEA,stroke-width:2px,color:#fff
+    style Memo fill:#0d1117,stroke:#00BFFF,stroke-width:1px,color:#fff
+    style SM fill:#161b22,stroke:#00BFFF,stroke-width:1px,color:#ccc
+    style MC fill:#161b22,stroke:#00BFFF,stroke-width:1px,color:#ccc
+    style OD fill:#161b22,stroke:#00BFFF,stroke-width:1px,color:#ccc
+    style Core fill:#161b22,stroke:#9F7AEA,stroke-width:1px,color:#fff
+    style Lib fill:#161b22,stroke:#9F7AEA,stroke-width:1px,color:#fff
+```
 `memo-core` is intentionally Android-free — every caching decision (hashing, TTL expiry, cost estimation) is plain, portable Kotlin, fully unit tested in isolation. `memo-android` wires this logic into real Android APIs: Room for persistence, `ConnectivityManager` for network state, and Google's LiteRT-LM for on-device inference.
 
 ---
