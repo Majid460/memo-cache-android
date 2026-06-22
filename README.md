@@ -57,9 +57,9 @@ Memo is a small, focused library that solves all three — as a drop-in layer, n
 
 <table>
 <tr>
-<td width="33%"><img src="https://raw.githubusercontent.com/Majid460/memo-cache-android/main/docs/screenshots/01-memo-welcome-offline-ai.jpg" width="100%" /></td>
-<td width="33%"><img src="https://raw.githubusercontent.com/Majid460/memo-cache-android/main/docs/screenshots/02-go-offline-anytime-prompt.jpg" width="100%" /></td>
-<td width="33%"><img src="https://raw.githubusercontent.com/Majid460/memo-cache-android/main/docs/screenshots/03-structured-answers-formatting.jpg" width="100%" /></td>
+<td width="33%"><img src="https://raw.githubusercontent.com/Majid460/memo-cache-android/main/docs/screenshots/01-welcome.png" width="100%" /></td>
+<td width="33%"><img src="https://raw.githubusercontent.com/Majid460/memo-cache-android/main/docs/screenshots/02-offline-prompt.png" width="100%" /></td>
+<td width="33%"><img src="https://raw.githubusercontent.com/Majid460/memo-cache-android/main/docs/screenshots/03-chat-formatting.png" width="100%" /></td>
 </tr>
 <tr>
 <td align="center"><b>Choose your model</b><br/>Pick Lite or Standard on first launch</td>
@@ -67,9 +67,9 @@ Memo is a small, focused library that solves all three — as a drop-in layer, n
 <td align="center"><b>Smart rendering</b><br/>Tables, headings, formatting — handled</td>
 </tr>
 <tr>
-<td width="33%"><img src="https://raw.githubusercontent.com/Majid460/memo-cache-android/main/docs/screenshots/04-total-control-model-settings.jpg" width="100%" /></td>
-<td width="33%"><img src="https://raw.githubusercontent.com/Majid460/memo-cache-android/main/docs/screenshots/05-downloading-local-ai-model.jpg" width="100%" /></td>
-<td width="33%"><img src="https://raw.githubusercontent.com/Majid460/memo-cache-android/main/docs/screenshots/06-status-error-no-model-available.jpg" width="100%" /></td>
+<td width="33%"><img src="https://raw.githubusercontent.com/Majid460/memo-cache-android/main/docs/screenshots/04-control-settings.png" width="100%" /></td>
+<td width="33%"><img src="https://raw.githubusercontent.com/Majid460/memo-cache-android/main/docs/screenshots/05-download-progress.png" width="100%" /></td>
+<td width="33%"><img src="https://raw.githubusercontent.com/Majid460/memo-cache-android/main/docs/screenshots/06-status-alert.png" width="100%" /></td>
 </tr>
 <tr>
 <td align="center"><b>Full control</b><br/>Switch models, monitor resources, anytime</td>
@@ -77,7 +77,7 @@ Memo is a small, focused library that solves all three — as a drop-in layer, n
 <td align="center"><b>Model required status</b><br/>Alerts you when a local model needs loading</td>
 </tr>
 <tr>
-<td width="33%"><img src="https://raw.githubusercontent.com/Majid460/memo-cache-android/main/docs/screenshots/07-zero-signal-offline-chat.jpg" width="100%" /></td>
+<td width="33%"><img src="https://raw.githubusercontent.com/Majid460/memo-cache-android/main/docs/screenshots/07-offline-chatting.png" width="100%" /></td>
 <td width="33%"></td>
 <td width="33%"></td>
 </tr>
@@ -88,7 +88,7 @@ Memo is a small, focused library that solves all three — as a drop-in layer, n
 </tr>
 </table>
 
-All six screenshots are from the included Compose demo app, included in this repo and runnable out of the box.
+All the screenshots are from the included Compose demo app, included in this repo and runnable out of the box.
 
 ---
 
