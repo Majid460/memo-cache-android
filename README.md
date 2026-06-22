@@ -143,7 +143,7 @@ Add the dependency:
 
 ```kotlin
 dependencies {
-    implementation("com.github.Majid460:memo-cache-android:1.0.0")
+  implementation("com.github.Majid460.memo-cache-android:memo-android:1.0.0")
 }
 ```
 
