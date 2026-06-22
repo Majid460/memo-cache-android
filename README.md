@@ -57,24 +57,34 @@ Memo is a small, focused library that solves all three — as a drop-in layer, n
 
 <table>
 <tr>
-<td width="33%"><img src="https://raw.githubusercontent.com/Majid460/memo-cache-android/main/docs/screenshots/01-welcome.png" width="100%" /></td>
-<td width="33%"><img src="https://raw.githubusercontent.com/Majid460/memo-cache-android/main/docs/screenshots/02-online-mode.png" width="100%" /></td>
-<td width="33%"><img src="https://raw.githubusercontent.com/Majid460/memo-cache-android/main/docs/screenshots/03-download-progress.png" width="100%" /></td>
+<td width="33%"><img src="https://raw.githubusercontent.com/Majid460/memo-cache-android/main/docs/screenshots/01-memo-welcome-offline-ai.jpg" width="100%" /></td>
+<td width="33%"><img src="https://raw.githubusercontent.com/Majid460/memo-cache-android/main/docs/screenshots/02-go-offline-anytime-prompt.jpg" width="100%" /></td>
+<td width="33%"><img src="https://raw.githubusercontent.com/Majid460/memo-cache-android/main/docs/screenshots/03-structured-answers-formatting.jpg" width="100%" /></td>
 </tr>
 <tr>
 <td align="center"><b>Choose your model</b><br/>Pick Lite or Standard on first launch</td>
-<td align="center"><b>Cloud-fast when online</b><br/>Real-time responses via Groq</td>
-<td align="center"><b>Transparent downloads</b><br/>Live progress, fully visible</td>
-</tr>
-<tr>
-<td width="33%"><img src="https://raw.githubusercontent.com/Majid460/memo-cache-android/main/docs/screenshots/04-smart-rendering.png" width="100%" /></td>
-<td width="33%"><img src="https://raw.githubusercontent.com/Majid460/memo-cache-android/main/docs/screenshots/05-offline-mode.png" width="100%" /></td>
-<td width="33%"><img src="https://raw.githubusercontent.com/Majid460/memo-cache-android/main/docs/screenshots/06-full-control.png" width="100%" /></td>
-</tr>
-<tr>
+<td align="center"><b>Go offline anytime</b><br/>Download offline support instantly</td>
 <td align="center"><b>Smart rendering</b><br/>Tables, headings, formatting — handled</td>
-<td align="center"><b>True offline support</b><br/>Same conversation, zero connectivity</td>
+</tr>
+<tr>
+<td width="33%"><img src="https://raw.githubusercontent.com/Majid460/memo-cache-android/main/docs/screenshots/04-total-control-model-settings.jpg" width="100%" /></td>
+<td width="33%"><img src="https://raw.githubusercontent.com/Majid460/memo-cache-android/main/docs/screenshots/05-downloading-local-ai-model.jpg" width="100%" /></td>
+<td width="33%"><img src="https://raw.githubusercontent.com/Majid460/memo-cache-android/main/docs/screenshots/06-status-error-no-model-available.jpg" width="100%" /></td>
+</tr>
+<tr>
 <td align="center"><b>Full control</b><br/>Switch models, monitor resources, anytime</td>
+<td align="center"><b>Transparent downloads</b><br/>Live progress, fully visible</td>
+<td align="center"><b>Model required status</b><br/>Alerts you when a local model needs loading</td>
+</tr>
+<tr>
+<td width="33%"><img src="https://raw.githubusercontent.com/Majid460/memo-cache-android/main/docs/screenshots/07-zero-signal-offline-chat.jpg" width="100%" /></td>
+<td width="33%"></td>
+<td width="33%"></td>
+</tr>
+<tr>
+<td align="center"><b>True offline support</b><br/>Full conversations, zero connectivity</td>
+<td></td>
+<td></td>
 </tr>
 </table>
 
