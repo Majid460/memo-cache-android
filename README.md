@@ -461,7 +461,7 @@ memo-cache-android/
 - [x] Live network observability with auto-fallback
 - [x] Model download, cancellation, and per-tier deletion
 - [x] Full Compose demo app
-- [ ] JitPack publishing (currently build-from-source)
+- [x] JitPack publishing (currently build-from-source)
 - [ ] Background downloads via WorkManager
 - [ ] Kotlin Multiplatform support (Compose Multiplatform)
 - [ ] Persisted chat history (planned, not yet implemented)
