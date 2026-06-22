@@ -2,6 +2,7 @@ plugins {
     alias(libs.plugins.android.library)
     alias(libs.plugins.ksp)
     alias(libs.plugins.serialization)
+    id("maven-publish")
 }
 
 android {
@@ -19,6 +20,11 @@ android {
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
+    }
+    publishing {
+        singleVariant("release") {
+            withSourcesJar()
+        }
     }
 
 }
@@ -50,4 +56,34 @@ dependencies {
     testImplementation(libs.kotlinx.coroutines.test.v180)
 
 
+}
+afterEvaluate {
+    publishing {
+        publications {
+            create<MavenPublication>("release") {
+                from(components["release"])
+                groupId = "com.github.Majid460"
+                artifactId = "memo-android"
+                version = "1.0.0"
+
+                pom {
+                    name.set("Memo Android")
+                    description.set("Offline-first AI caching layer for Android")
+                    url.set("https://github.com/Majid460/memo-cache-android")
+                    licenses {
+                        license {
+                            name.set("MIT License")
+                            url.set("https://opensource.org/licenses/MIT")
+                        }
+                    }
+                    developers {
+                        developer {
+                            id.set("Majid460")
+                            name.set("Majid Shahbaz")
+                        }
+                    }
+                }
+            }
+        }
+    }
 }
