@@ -19,7 +19,7 @@ We take the security of on-device AI architectures, hardware metrics collection,
 
 ### How to Report
 
-Please report security bugs by emailing the maintainer directly at **[Insert Your Email Here]**.
+Please report security bugs by emailing the maintainer directly at **nexgenai75@gmail.com**.
 
 To help us triage and patch the issue quickly, please include:
 1. **Description:** A detailed summary of the vulnerability.
